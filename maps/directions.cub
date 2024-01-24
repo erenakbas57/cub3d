@@ -1,0 +1,13 @@
+
+NO ./img/wall_no.xpm
+SO ./img/wall_so.xpm
+WE ./img/wall_we.xpm
+EA ./img/wall_ea.xpm
+
+F 98,70,33
+C 77,159,240
+
+111111
+100101
+10S001
+111111
