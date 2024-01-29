@@ -1,0 +1,10 @@
+
+NO ./img/wall_no.xpm
+SO ./img/wall_so.xpm
+EA ./img/wall_ea.xpm
+WE ./img/wall_we.xpm
+
+C 255,100,160
+F 122,122,122
+
+1

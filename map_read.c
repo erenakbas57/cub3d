@@ -5,90 +5,53 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: makbas <makbas@student.42istanbul.com.t    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2022/12/27 17:59:32 by makbas            #+#    #+#             */
-/*   Updated: 2022/12/27 18:00:51 by makbas           ###   ########.fr       */
+/*   Created: 2024/01/10 14:50:10 by makbas            #+#    #+#             */
+/*   Updated: 2024/01/29 16:31:19 by makbas           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "so_long.h"
+#include "cub3d.h"
 
-int	map_read_c(t_map *map, char *f_name)
+void	map_read_two(t_data *data, int i, int j)
 {
-	int	fd;
-	int	i;
+	int	len;
+	int	x;
 
-	map_read(map, f_name);
-	if (!(map->map_line) || map->map_y_line <= 0)
-	{
-		map->map_line = NULL;
-		return (1);
-	}
-	fd = open(f_name, O_RDONLY);
-	if (fd == -1)
-	{
-		free(map->map_line);
-		return (1);
-	}
-	i = 0;
-	map->map_line[i] = get_next_line(fd);
-	while (map->map_line[i])
-	{
-		i++;
-		map->map_line[i] = get_next_line(fd);
-	}
-	close(fd);
-	return (0);
+	x = 0;
+	len = j - i;
+	data->map_size = len;
+	data->map_line = (char **)malloc(sizeof(char *) * (len + 1));
+	if (data->map_line == NULL)
+		error("Error : Malloc error", data);
+	while (x < len)
+		data->map_line[x++] = ft_strdup_nospace(data->file_line[i++]);
+	data->map_line[x] = NULL;
 }
 
-void	map_read(t_map *map, char *f_name)
+void	map_read(t_data *data)
 {
-	int		len;
-	int		fd;
-	char	c;
+	int	value[3];
 
-	fd = open(f_name, O_RDONLY);
-	if (fd < 0)
+	value[0] = 0;
+	while (data->file_line[value[0]])
 	{
-		map->map_y_line = 0;
-		return ;
+		if (ft_strchr_one(data->file_line[value[0]]))
+			break ;
+		value[0]++;
 	}
-	len = 0;
-	while (read(fd, &c, 1))
+	value[1] = value[0];
+	while (data->file_line[value[0]])
 	{
-		if (c == '\n')
-			len++;
+		if (!ft_strchr_line(data->file_line[value[0]]))
+			break ;
+		value[0]++;
 	}
-	len++;
-	close(fd);
-	map->map_line = malloc(sizeof(char *) * len + 1);
-	if (!map->map_line)
-		return ;
-	map->map_line[len + 1] = NULL;
-	map->map_y_line = len;
-}
-
-void	free_map(t_map *map)
-{
-	int	i;
-
-	i = 0;
-	while (i < map->map_y_line)
+	value[2] = value[0];
+	while (data->file_line[value[0]])
 	{
-		free(map->map_line[i]);
-		i++;
+		if (ft_strchr_line(data->file_line[value[0]]))
+			error("Error : Wrong map", data);
+		value[0]++;
 	}
-	free(map->map_line);
-}
-
-int	ft_exit(t_map *map)
-{
-	mlx_destroy_image(map->mlx, map->img_b);
-	mlx_destroy_image(map->mlx, map->img_w);
-	mlx_destroy_image(map->mlx, map->img_e);
-	mlx_destroy_image(map->mlx, map->img_p);
-	mlx_destroy_image(map->mlx, map->img_c);
-	mlx_clear_window(map->mlx, map->mlx_win);
-	free_map(map);
-	exit(0);
-	return (0);
+	map_read_two(data, value[1], value[2]);
 }

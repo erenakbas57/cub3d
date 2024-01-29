@@ -5,87 +5,114 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: makbas <makbas@student.42istanbul.com.t    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2022/12/27 14:27:23 by makbas            #+#    #+#             */
-/*   Updated: 2022/12/27 18:05:15 by makbas           ###   ########.fr       */
+/*   Created: 2024/01/10 14:44:12 by makbas            #+#    #+#             */
+/*   Updated: 2024/01/29 18:44:50 by makbas           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "so_long.h"
+#include "cub3d.h"
 
-int	file_control(int argc, char *argv)
+void	intro(t_data *data)
 {
-	char	*a;
+	data->keys = NULL;
+	data->player = NULL;
+	data->wall = NULL;
+	data->screen = NULL;
 
-	a = argv;
-	if (argc != 2)
+	data->no = NULL;
+	data->so = NULL;
+	data->we = NULL;
+	data->ea = NULL;
+	data->f = NULL;
+	data->c = NULL;
+
+	data->file_line = NULL;
+	data->map_line = NULL;
+}
+
+void	control(int ac, char *av, t_data *data)
+{
+	if (ac != 2)
+		error("Error : Wrong number of arguments", data);
+	if (ft_strncmp(av + ft_strlen(av) - 4, ".cub", 4))
+		error("Error : Wrong file format", data);
+	if (file_read(data, av))
+		error("\0", data);
+	if (dir_control(data))
+		error("Error : Wrong wall file or color", data);
+	map_read(data);
+	if (element_c(data) || valid_c(data))
+		error("Error: Wrong map", data);
+}
+
+// void start(t_data *data)
+// {
+
+// 
+
+int	close_window(t_data *cub3d)
+{
+    mlx_destroy_window(cub3d->screen->mlx, cub3d->screen->mlx_win);
+	system("leaks cub3d");
+	exit(0);
+}
+
+int	key_press(int keycode, t_data *cub3d)
+{
+	if (keycode == 53)
 	{
-		ft_printf("HATA : geçersiz argüman sayısı!");
-		return (1);
+		free_directory(cub3d);
+		exit(0);
 	}
-	if (argv[ft_strlen(argv) - 1] != 'r' && argv[ft_strlen(argv) - 2] != 'e' && \
-			argv[ft_strlen(a) - 3] != 'b' && argv[ft_strlen(a) - 4] != '.')
-	{
-		ft_printf("HATA : dosya uzantısı hatası!");
-		return (1);
-	}
+	if (keycode == 13)
+		cub3d->keys->w = 1;
+	if (keycode == 0)
+		cub3d->keys->a = 1;
+	if (keycode == 1)
+		cub3d->keys->s = 1;
+	if (keycode == 2)
+		cub3d->keys->d = 1;
+	if (keycode == 123)
+		cub3d->keys->left = 1;
+	if (keycode == 124)
+		cub3d->keys->right = 1;
 	return (0);
 }
 
-int	map_control(t_map *map)
+int	key_release(int keycode, t_data *cub3d)
 {
-	if (rectangle_c(map) || char_c(map) || wall_c(map) || \
-			element_c(map) || valid_c(map))
-	{
-		free_map(map);
-		return (1);
-	}
-	free_map(map);
+	if (keycode == 13)
+		cub3d->keys->w = 0;
+	if (keycode == 0)
+		cub3d->keys->a = 0;
+	if (keycode == 1)
+		cub3d->keys->s = 0;
+	if (keycode == 2)
+		cub3d->keys->d = 0;
+	if (keycode == 123)
+		cub3d->keys->left = 0;
+	if (keycode == 124)
+		cub3d->keys->right = 0;
 	return (0);
 }
-
-int	map_init(t_map *map, char *argc)
+int	main(int ac, char **av)
 {
-	int	x;
+	t_data	*data;
 
-	map_read_control(map, argc);
-	map->p_move_c = 0;
-	map->mlx = mlx_init();
-	x = ft_strlen(map->map_line[0]) - 1;
-	map->mlx_win = mlx_new_window(map->mlx, \
-		64 * x, 64 * map->map_y_line, "SO_LONG");
-	if (!map->mlx || !map->mlx_win || create_xpm(map))
-	{
-		ft_printf("HATA : MLX hatası!");
-		return (1);
-	}
-	win_put_img(map);
-	mlx_string_put(map->mlx, map->mlx_win, 15, 15, 16777215, "0");
-	mlx_hook(map->mlx_win, 2, 1L << 2, ft_move, map);
-	mlx_hook(map->mlx_win, 17, 1L << 2, ft_exit, map);
-	mlx_loop(map->mlx);
-	return (0);
-}
+	data = (t_data *)malloc(sizeof(t_data));
+	intro(data);
+	control(ac, av[1], data);
+	init(data);
 
-int	map_read_control(t_map *map, char *f_name)
-{
-	map_read_c(map, f_name);
-	if (!(map->map_line))
-	{
-		ft_printf("HATA : dosya okunamıyor!");
-		return (1);
-	}
-	return (0);
-}
+	mlx_loop_hook(data->screen->mlx, &render, data);
+	mlx_hook(data->screen->mlx_win, 2, 1L << 0, &key_press, data);
+	mlx_hook(data->screen->mlx_win, 3, 1L << 1, &key_release, data);
+	mlx_hook(data->screen->mlx_win, 17, 1L << 17, &close_window, data);
+	mlx_loop(data->screen->mlx);
 
-int	main(int argc, char *argv[])
-{
-	t_map	map;
-
-	if (file_control(argc, argv[1]) || map_read_control(&map, argv[1]))
-		return (1);
-	if (map_control(&map))
-		return (1);
-	if (map_init(&map, argv[1]))
-		return (1);
+	free_file(data);
+	free_map(data);
+	free_directory(data);
+	system("leaks cub3d");
 	return (0);
 }
